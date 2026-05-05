@@ -1,0 +1,6 @@
+TABLERO "Mini Proyecto" {
+    COLUMNA "Unica" {
+        tarea: "Sola" [prioridad: BAJA, responsable: "Luis",
+            fecha_limite: 2026-06-01]
+    };
+};

@@ -1,0 +1,20 @@
+TABLERO "Desarrollo Web" {
+    COLUMNA "Backlog" {
+        tarea: "Diseño de base de datos" [prioridad: ALTA, responsable: "Sofia",
+            fecha_limite: 2026-06-01],
+        tarea: "Mockups UI" [prioridad: MEDIA, responsable: "Diego",
+            fecha_limite: 2026-06-05]
+    };
+    COLUMNA "En Desarrollo" {
+        tarea: "Login de usuarios" [prioridad: ALTA, responsable: "Sofia",
+            fecha_limite: 2026-06-10]
+    };
+    COLUMNA "QA" {
+        tarea: "Pruebas de integración" [prioridad: MEDIA, responsable: "Luis",
+            fecha_limite: 2026-06-15]
+    };
+    COLUMNA "Listo" {
+        tarea: "Setup del servidor" [prioridad: BAJA, responsable: "Diego",
+            fecha_limite: 2026-05-20]
+    };
+};

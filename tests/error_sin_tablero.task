@@ -1,0 +1,6 @@
+"Proyecto sin tablero" {
+    COLUMNA "Tareas" {
+        tarea: "Tarea" [prioridad: ALTA, responsable: "Ana",
+            fecha_limite: 2026-05-01]
+    };
+};

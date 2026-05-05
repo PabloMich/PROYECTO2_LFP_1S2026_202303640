@@ -1,0 +1,14 @@
+TABLERO "Grande" {
+    COLUMNA "A" {
+        tarea: "T1" [prioridad: ALTA, responsable: "Ana",
+            fecha_limite: 2026-05-01]
+    };
+    COLUMNA "B" {
+        tarea: "T2" [prioridad: MEDIA, responsable: "Bob",
+            fecha_limite: 2026-05-02]
+    };
+    COLUMNA "C" {
+        tarea: "T3" [prioridad: BAJA, responsable: "Carlos",
+            fecha_limite: 2026-05-03]
+    };
+};
