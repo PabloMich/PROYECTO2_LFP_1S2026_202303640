@@ -56,44 +56,53 @@ Token LexicalAnalyzer::leerPalabraOFecha() {
     int linInicio = linea;
     std::string lex;
 
-    // Lee letras, dígitos y guiones bajos (para fecha_limite)
-    while (!esFin() && (std::isalnum((unsigned char)actual()) || actual() == '_')) {
-        lex += avanzar();
+    // Lee letras, dígitos, _ y además salta chars inválidos reportándolos
+    while (!esFin()) {
+        char c = actual();
+
+        if (std::isalnum((unsigned char)c) || c == '_') {
+            lex += avanzar();
+        }
+        else if (c == '"' || c == '{' || c == '}' || c == '[' || c == ']' ||
+         c == ':' || c == ',' || c == ';' || c == '-' || std::isspace((unsigned char)c)) {
+            break;
+         }
+        else {
+            // Carácter inválido DENTRO de una palabra (ej: # en AL#TA)
+            errManager.agregarError(
+                std::string(1, c), ErrorType::LEXICO,
+                std::string("Carácter no reconocido '") + c +
+                "' dentro del lexema " + lex,
+                linea, columna);
+            avanzar(); // saltarlo y continuar leyendo
+        }
     }
 
-    // Es una fecha? Si el lexema son 4 dígitos y sigue un guion → AAAA-MM-DD
+    // ¿Es una fecha? 4 dígitos seguidos de guion
     if (lex.size() == 4 && std::isdigit((unsigned char)lex[0]) && actual() == '-') {
-        // Intentar leer -MM-DD
         std::string resto;
         int savedPos = pos, savedLin = linea, savedCol = columna;
-
-        // Lee -MM
         if (actual() == '-') {
-            resto += avanzar(); // -
+            resto += avanzar();
             for (int i = 0; i < 2 && !esFin() && std::isdigit((unsigned char)actual()); i++)
                 resto += avanzar();
         }
-        // Lee -DD
         if (actual() == '-') {
-            resto += avanzar(); // -
+            resto += avanzar();
             for (int i = 0; i < 2 && !esFin() && std::isdigit((unsigned char)actual()); i++)
                 resto += avanzar();
         }
-
-        // Validar formato AAAA-MM-DD (longitud exacta del resto = 6)
-        if (resto.size() == 6) {
+        if (resto.size() == 6)
             return Token(TokenType::FECHA, lex + resto, linInicio, colInicio);
-        }
-        // Si no es válida, retrocedemos
         pos = savedPos; linea = savedLin; columna = savedCol;
     }
 
-    // ¿Es un número entero que empezó con dígitos?
-    if (!lex.empty() && std::isdigit((unsigned char)lex[0])) {
+    if (!lex.empty() && std::isdigit((unsigned char)lex[0]))
         return Token(TokenType::ENTERO, lex, linInicio, colInicio);
-    }
 
-    // Clasificar como keyword o error
+    if (lex.empty())
+        return Token(TokenType::DESCONOCIDO, lex, linInicio, colInicio);
+
     TokenType tipo = clasificarPalabra(lex);
     if (tipo == TokenType::DESCONOCIDO) {
         errManager.agregarError(lex, ErrorType::LEXICO,
@@ -107,10 +116,20 @@ Token LexicalAnalyzer::leerPalabraOFecha() {
 Token LexicalAnalyzer::leerCadena() {
     int colInicio = columna;
     int linInicio = linea;
-    avanzar(); // consume la " inicial
+    avanzar(); // consume "
     std::string lex;
 
     while (!esFin() && actual() != '"' && actual() != '\n') {
+        char c = actual();
+        // Reportar chars inválidos dentro de la cadena
+        if (c == '@' || c == '#' || c == '$' || c == '!' || c == '%' ||
+            c == '^' || c == '&' || c == '*' || c == '?' || c == '~') {
+            errManager.agregarError(
+                std::string(1, c), ErrorType::LEXICO,
+                std::string("Carácter no reconocido '") + c +
+                "' dentro de la cadena \"" + lex + "\"",
+                linea, columna);
+            }
         lex += avanzar();
     }
 
@@ -120,7 +139,7 @@ Token LexicalAnalyzer::leerCadena() {
         return Token(TokenType::DESCONOCIDO, lex, linInicio, colInicio);
     }
 
-    avanzar(); // consume la " final
+    avanzar(); // consume "
     return Token(TokenType::CADENA, lex, linInicio, colInicio);
 }
 

@@ -101,10 +101,29 @@ void SyntaxAnalyzer::parseTarea() {
 // <atributos> ::= <atributo> "," <atributos> | <atributo>
 void SyntaxAnalyzer::parseAtributos(Tarea& tarea) {
     parseAtributo(tarea);
-    while (verificar(TokenType::COMA)) {
-        avanzar();
-        if (verificar(TokenType::CORCHETE_CIE)) break;
-        parseAtributo(tarea);
+    while (!verificar(TokenType::CORCHETE_CIE) && !esFin()) {
+        if (verificar(TokenType::COMA)) {
+            avanzar(); // consume ','
+            if (verificar(TokenType::CORCHETE_CIE)) break;
+            parseAtributo(tarea);
+        } else {
+            // Falta la coma entre atributos
+            const Token& t = actual();
+            errManager.agregarError(
+                tokens[pos-1].lexema,   // el token anterior (el que necesitaba coma)
+                ErrorType::SINTACTICO,
+                "Se esperaba COMA después de \"" + tokens[pos-1].lexema +
+                "\", se encontró " + t.lexema,
+                tokens[pos-1].linea, tokens[pos-1].columna);
+            // Intentar continuar parseando el siguiente atributo
+            if (verificar(TokenType::PRIORIDAD) ||
+                verificar(TokenType::RESPONSABLE) ||
+                verificar(TokenType::FECHA_LIMITE)) {
+                parseAtributo(tarea);
+                } else {
+                    break;
+                }
+        }
     }
 }
 

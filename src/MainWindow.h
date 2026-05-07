@@ -46,4 +46,6 @@ private:
     void mostrarTokens();
     void mostrarErrores();
     void limpiarTablas();
+
+    void abrirGraphviz();
 };

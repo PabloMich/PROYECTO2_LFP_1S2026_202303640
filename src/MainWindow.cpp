@@ -15,6 +15,8 @@
 #include <QUrl>
 #include <QDir>
 
+#include <cstdlib>
+#include <QDebug>
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     setWindowTitle("TaskScript Analyzer");
     setMinimumSize(1100, 650);
@@ -68,6 +70,16 @@ void MainWindow::setupUI() {
     tablaErrores = new QTableWidget(0, 6);
     tablaErrores->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     tablaErrores->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch); // Descripción se estira
+    tablaErrores->setColumnWidth(0, 35);  // #
+    tablaErrores->setColumnWidth(1, 35);  // número
+    tablaErrores->setColumnWidth(2, 80);  // lexema
+    tablaErrores->setColumnWidth(4, 70);  // tipo
+    tablaErrores->setColumnWidth(5, 45);  // línea
+    tablaErrores->setColumnWidth(6, 35);  // col
+
+    tablaErrores->setWordWrap(true);
+    tablaErrores->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+
     tablaTokens->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     tablaTokens->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch); // Tipo se estira
     tablaErrores->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -90,6 +102,7 @@ void MainWindow::setupUI() {
     QPushButton* btnR1 = new QPushButton("Reporte Kanban");
     QPushButton* btnR2 = new QPushButton("Carga Responsable");
     QPushButton* btnR3 = new QPushButton("Prioridades");
+    QPushButton* btnDot = new QPushButton("Árbol DOT");
 
     QString estiloReporte =
         "QPushButton { background:#5D6D7E; color:white; padding:5px; border-radius:4px; }"
@@ -97,11 +110,15 @@ void MainWindow::setupUI() {
     btnR1->setStyleSheet(estiloReporte);
     btnR2->setStyleSheet(estiloReporte);
     btnR3->setStyleSheet(estiloReporte);
+    btnDot->setStyleSheet(
+    "QPushButton { background:#6C3483; color:white; padding:5px; border-radius:4px; }"
+    "QPushButton:hover { background:#4a235a; }");
 
     QHBoxLayout* layReportes = new QHBoxLayout();
     layReportes->addWidget(btnR1);
     layReportes->addWidget(btnR2);
     layReportes->addWidget(btnR3);
+    layReportes->addWidget(btnDot);
 
     // Agrega layReportes al layout del panel derecho
     QWidget* panelDer = new QWidget();
@@ -119,6 +136,7 @@ void MainWindow::setupUI() {
     connect(btnR1, &QPushButton::clicked, this, &MainWindow::abrirReporte1);
     connect(btnR2, &QPushButton::clicked, this, &MainWindow::abrirReporte2);
     connect(btnR3, &QPushButton::clicked, this, &MainWindow::abrirReporte3);
+    connect(btnDot, &QPushButton::clicked, this, &MainWindow::abrirGraphviz);
 }
 
 // ── Cargar archivo .task ─────────────────────────────────────
@@ -145,6 +163,7 @@ void MainWindow::cargarArchivo() {
 // ── Analizar el código ───────────────────────────────────────
 
 void MainWindow::analizarCodigo() {
+    qDebug() << "analizarCodigo ejecutado";
     limpiarTablas();
 
     std::string codigo = editorCodigo->toPlainText().toStdString();
@@ -233,6 +252,34 @@ void MainWindow::abrirReporte3() {
     ReportGenerator::generarResumenPrioridades(tableroActual, "reporte_prioridades.html");
     QDesktopServices::openUrl(QUrl::fromLocalFile(
         QDir::currentPath() + "/reporte_prioridades.html"));
+}
+void MainWindow::abrirGraphviz() {
+    if (tableroActual.nombre.empty()) {
+        QMessageBox::information(this, "Aviso", "Primero analiza un archivo .task");
+        return;
+    }
+
+    QString carpeta = QDir::currentPath();
+    QString rutaDot = carpeta + "/arbol.dot";
+    QString rutaPng = carpeta + "/arbol.png";
+
+    // Generar el archivo .dot
+    ReportGenerator::generarGraphviz(tableroActual, rutaDot.toStdString());
+
+    // Ejecutar dot para convertir a PNG
+    QString comando = "dot -Tpng \"" + rutaDot + "\" -o \"" + rutaPng + "\"";
+    int resultado = std::system(comando.toStdString().c_str());
+
+    if (resultado == 0) {
+        // Abrir la imagen con el visor por defecto de Windows
+        QDesktopServices::openUrl(QUrl::fromLocalFile(rutaPng));
+    } else {
+        QMessageBox::warning(this, "Error",
+            "No se pudo generar la imagen.\n"
+            "¿Está Graphviz instalado y en el PATH?\n\n"
+            "Instálalo en: https://graphviz.org/download/\n\n"
+            "O usa el archivo manualmente:\n" + rutaDot);
+    }
 }
 
 // ── Limpiar ──────────────────────────────────────────────────
